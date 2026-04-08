@@ -1,0 +1,14 @@
+# Staff list - complex dataset (more nurses, more leave days)
+# Format: Name, leave days (empty means available all week)
+Tangi, Monday
+Matias, Thursday, Friday
+Aguero, Wednesday, Thursday
+Meke, Tuesday
+Trizzy, Saturday, Sunday
+Kamati R,
+Beukes D, Saturday, Sunday
+Naruseb J,
+Eigowab S, Friday, Saturday
+Kahuure K, Monday
+Gaweseb T, Friday
+Mwandingi F, Wednesday, Saturday
