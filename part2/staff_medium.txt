@@ -1,0 +1,12 @@
+# Staff list - medium dataset
+# Format: Name, leave days (empty means available all week)
+Tangi,
+Matias, Thursday
+Aguero, Wednesday
+Meke,
+Trizzy, Saturday
+Kamati R,
+Beukes D, Friday
+Naruseb J,
+Eigowab S, Sunday
+Kahuure K,
