@@ -8,14 +8,13 @@ Breadth-First Search (BFS), which guarantees the minimum number of connections.
 
 import csv
 import sys
-from collections import deque
 
 
 # ─────────────────────────────────────────────
 #  Data structures
 # ─────────────────────────────────────────────
 
-# city_name (lowercase) -> set of city_ids  (names are not always unique)
+# city_name (lowercase) -> set of city_ids
 city_name_to_ids = {}
 
 # city_id -> {"name": str, "country": str, "flights": set of (flight_id, dest_city_id)}
@@ -23,6 +22,9 @@ cities = {}
 
 # airline_id -> airline_name
 airlines = {}
+
+# flight_id -> airline_id
+flight_airline_map = {}
 
 
 # ─────────────────────────────────────────────
@@ -35,9 +37,9 @@ class Node:
 
     Attributes
     ----------
-    state      : the city_id at this node
-    parent     : the parent Node (None for the initial node)
-    action     : the (flight_id, city_id) pair that led to this node
+    state  : the city_id at this node
+    parent : the parent Node (None for the initial node)
+    action : the (flight_id, city_id) pair that led to this node
     """
 
     def __init__(self, state, parent, action):
@@ -47,10 +49,7 @@ class Node:
 
 
 class StackFrontier:
-    """
-    LIFO frontier – implements Depth-First Search (DFS).
-    Included for completeness; we use QueueFrontier for shortest-path.
-    """
+    """LIFO frontier – implements Depth-First Search (DFS)."""
 
     def __init__(self):
         self._frontier = []
@@ -71,10 +70,7 @@ class StackFrontier:
 
 
 class QueueFrontier(StackFrontier):
-    """
-    FIFO frontier – implements Breadth-First Search (BFS).
-    BFS guarantees the shortest path (fewest connections).
-    """
+    """FIFO frontier – implements Breadth-First Search (BFS). Guarantees shortest path."""
 
     def remove(self):
         if self.empty():
@@ -92,68 +88,56 @@ def load_data(directory):
 
     Expected files
     --------------
-    cities.csv  : city_id, city_name, country
-    flights.csv : flight_id, source_city_id, destination_city_id, airline_id
-    airlines.csv: airline_id, airline_name
+    cities.csv   : city_id, city_name, country
+    flights.csv  : flight_id, source_city_id, destination_city_id, airline_id
+    airlines.csv : airline_id, airline_name
     """
 
-    # ── Airlines ──────────────────────────────
+    # Airlines
     with open(f"{directory}/airlines.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+        for row in csv.DictReader(f):
             airlines[row["airline_id"]] = row["airline_name"]
 
-    # ── Cities ────────────────────────────────
+    # Cities
     with open(f"{directory}/cities.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+        for row in csv.DictReader(f):
             cid = row["city_id"]
             name = row["city_name"]
             cities[cid] = {
                 "name": name,
                 "country": row["country"],
-                "flights": set(),   # populated when flights are loaded
+                "flights": set(),
             }
-            key = name.lower()
-            city_name_to_ids.setdefault(key, set()).add(cid)
+            city_name_to_ids.setdefault(name.lower(), set()).add(cid)
 
-    # ── Flights ───────────────────────────────
+    # Flights
     with open(f"{directory}/flights.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
+        for row in csv.DictReader(f):
             src = row["source_city_id"]
             dst = row["destination_city_id"]
             fid = row["flight_id"]
+            aid = row["airline_id"]
             if src in cities:
                 cities[src]["flights"].add((fid, dst))
+            flight_airline_map[fid] = aid
 
 
 # ─────────────────────────────────────────────
-#  Required helper function
+#  Required functions
 # ─────────────────────────────────────────────
 
 def neighbors_for_city(city_id):
     """
     Return all cities directly reachable from *city_id* by a single flight.
 
-    Parameters
-    ----------
-    city_id : str
-        The ID of the departure city.
-
     Returns
     -------
     set of (flight_id, city_id) tuples
-        Each tuple represents a direct outgoing flight from the given city.
     """
     if city_id not in cities:
         return set()
     return cities[city_id]["flights"]
 
-
-# ─────────────────────────────────────────────
-#  Core search algorithm
-# ─────────────────────────────────────────────
 
 def shortest_path(source, target):
     """
@@ -162,33 +146,16 @@ def shortest_path(source, target):
     Uses Breadth-First Search so the first solution found is guaranteed to
     use the minimum number of flights.
 
-    Parameters
-    ----------
-    source : str
-        City ID of the departure city.
-    target : str
-        City ID of the destination city.
-
     Returns
     -------
-    list of (flight_id, city_id) tuples
-        Each tuple is the next hop on the path from source to target.
-        For example, [(101, "4"), ("205", "7")] means:
-            source → flight 101 → city 4 → flight 205 → city 7 (= target).
-    None
-        If no path exists between the two cities.
+    list of (flight_id, city_id) tuples, or None if no path exists.
     """
 
-    # Trivial case
     if source == target:
         return []
 
-    # Initialise BFS frontier with the source city
-    start = Node(state=source, parent=None, action=None)
     frontier = QueueFrontier()
-    frontier.add(start)
-
-    # Track explored states to avoid revisiting
+    frontier.add(Node(state=source, parent=None, action=None))
     explored = set()
 
     while not frontier.empty():
@@ -204,21 +171,18 @@ def shortest_path(source, target):
 
             child = Node(state=neighbor_id, parent=node, action=(flight_id, neighbor_id))
 
-            # Goal check on addition (more efficient than checking on removal)
+            # Goal check on addition (more efficient)
             if neighbor_id == target:
                 return _reconstruct_path(child)
 
             if not frontier.contains_state(neighbor_id):
                 frontier.add(child)
 
-    # Exhausted the frontier without finding the target
     return None
 
 
 def _reconstruct_path(node):
-    """
-    Walk back up the parent chain to build the ordered list of (flight_id, city_id) hops.
-    """
+    """Walk back up the parent chain to build the ordered path."""
     path = []
     while node.action is not None:
         path.append(node.action)
@@ -228,17 +192,13 @@ def _reconstruct_path(node):
 
 
 # ─────────────────────────────────────────────
-#  User interaction helpers
+#  User interaction
 # ─────────────────────────────────────────────
 
 def resolve_city(prompt):
     """
     Prompt the user for a city name and resolve it to a single city_id.
-    Handles ambiguous names (multiple cities with the same name) gracefully.
-
-    Returns
-    -------
-    str  – the chosen city_id
+    Handles ambiguous names gracefully.
     """
     while True:
         name = input(prompt).strip()
@@ -253,7 +213,6 @@ def resolve_city(prompt):
         if len(matches) == 1:
             return next(iter(matches))
 
-        # Disambiguate when multiple cities share the same name
         print(f'  Multiple cities named "{name}" found:')
         sorted_matches = sorted(matches)
         for idx, cid in enumerate(sorted_matches, 1):
@@ -297,71 +256,13 @@ def main():
 
     print(f"\n{len(path)} flight connection(s).\n")
 
-    # Build a readable itinerary
     current_id = source_id
     for hop_num, (flight_id, dest_id) in enumerate(path, 1):
         src_name = cities[current_id]["name"]
         dst_name = cities[dest_id]["name"]
-        airline_id = _airline_for_flight(flight_id)
-        airline_name = airlines.get(airline_id, "Unknown Airline")
-        print(f"  {hop_num}: {src_name} → {dst_name}  "
-              f"(Flight {flight_id}, {airline_name})")
+        airline_name = airlines.get(flight_airline_map.get(flight_id, ""), "Unknown Airline")
+        print(f"  {hop_num}: {src_name} -> {dst_name}  (Flight {flight_id}, {airline_name})")
         current_id = dest_id
-
-
-def _airline_for_flight(flight_id):
-    """Look up the airline_id for a given flight_id by scanning the flights data."""
-    for cid, city in cities.items():
-        for fid, _ in city["flights"]:
-            if fid == flight_id:
-                # We need the airline — reload from file or store it during load.
-                # We stored it during load_data; access via the module-level store.
-                pass
-    # The airline is stored in flight_airline_map (populated below)
-    return flight_airline_map.get(flight_id, "")
-
-
-# Module-level map: flight_id -> airline_id  (populated in load_data)
-flight_airline_map = {}
-
-
-def load_data(directory):
-    """
-    Load cities, flights, and airlines from CSV files in *directory*.
-    (Overrides the earlier stub to also populate flight_airline_map.)
-    """
-
-    # ── Airlines ──────────────────────────────
-    with open(f"{directory}/airlines.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            airlines[row["airline_id"]] = row["airline_name"]
-
-    # ── Cities ────────────────────────────────
-    with open(f"{directory}/cities.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            cid = row["city_id"]
-            name = row["city_name"]
-            cities[cid] = {
-                "name": name,
-                "country": row["country"],
-                "flights": set(),
-            }
-            key = name.lower()
-            city_name_to_ids.setdefault(key, set()).add(cid)
-
-    # ── Flights ───────────────────────────────
-    with open(f"{directory}/flights.csv", encoding="utf-8") as f:
-        reader = csv.DictReader(f)
-        for row in reader:
-            src = row["source_city_id"]
-            dst = row["destination_city_id"]
-            fid = row["flight_id"]
-            aid = row["airline_id"]
-            if src in cities:
-                cities[src]["flights"].add((fid, dst))
-            flight_airline_map[fid] = aid
 
 
 if __name__ == "__main__":
