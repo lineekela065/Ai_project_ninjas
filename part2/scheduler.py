@@ -86,7 +86,7 @@ def main():
 
     filename = sys.argv[1]
 
-    print(f"\nGenerating Weekly Schedule for 2026...")
+    print(f"\nGenerating Weekly Schedule for 2026...g")
     nurses, leave_days = load_staff(filename)
     print(f"Data loaded: {len(nurses)} staff members available.")
 
