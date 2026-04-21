@@ -1,11 +1,7 @@
 # ARI711S - Artificial Intelligence
 # Group Project 2026 - Part 2: Hospital Shift Scheduler
 # This is the main file that loads the staff and runs the solver
-#
-# How to run:
-#   python3 scheduler.py staff_small.txt
-#   python3 scheduler.py staff_medium.txt
-#   python3 scheduler.py staff_complex.txt
+
 
 import sys
 from shift_solver import Shift_AI_Solver, DAYS, SHIFTS
