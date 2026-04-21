@@ -1,12 +1,4 @@
-# ARI711S - Artificial Intelligence
-# Group Project 2026 - Part 3: Traffic Sign Recognition
-#
-# Trains a CNN model to classify German traffic signs (43 categories)
-# using the GTSRB dataset.
-#
-# How to run:
-#   python3 traffic.py gtsrb
-#   python3 traffic.py gtsrb model.h5
+
 
 import sys
 import os
