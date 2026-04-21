@@ -4,7 +4,6 @@
 
 from collections import deque
 
-# days of the week and shift types
 DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
 SHIFTS = ["Morning", "Afternoon", "Night"]
 
