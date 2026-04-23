@@ -156,7 +156,7 @@ def build_model():
         layers.Dense(NUM_CATEGORIES, activation="softmax")
     ])
 
-    # compile the model
+
     model.compile(
         optimizer="adam",
         loss="categorical_crossentropy",
