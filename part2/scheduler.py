@@ -7,7 +7,7 @@ import sys
 from shift_solver import Shift_AI_Solver, DAYS, SHIFTS
 
 
-# reads the staff file and returns list of nurses and their leave days
+
 def load_staff(filename):
     nurses = []
     leave_days = {}
